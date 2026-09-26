@@ -16,6 +16,7 @@ import {
     enrichCaseOsint,
     type OsintFinding,
 } from "../../../services/osint";
+import { mockOsintFindings } from "../../../data/mockCaseData";
 
 // ── Finding type metadata ───────────────────────────────────────────────
 
@@ -68,18 +69,31 @@ const FALLBACK_META = {
 
 // ── Component ───────────────────────────────────────────────────────────
 
-export default function DigitalFootprint({ caseId }: { caseId: string }) {
-    const [findings, setFindings] = useState<OsintFinding[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export default function DigitalFootprint({
+    caseId,
+    isDemoMode = true,
+    onRunRealPipeline,
+}: {
+    caseId: string;
+    isDemoMode?: boolean;
+    onRunRealPipeline?: () => void;
+}) {
+    const [liveFindings, setLiveFindings] = useState<OsintFinding[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
+    const [isLiveMode, setIsLiveMode] = useState(!isDemoMode);
     const [expanded, setExpanded] = useState<string | null>(null);
 
     const load = async () => {
+        setIsLoading(true);
         try {
             const res = await getCaseOsint(caseId);
-            setFindings(res.findings || []);
+            if (res.findings && res.findings.length > 0) {
+                setLiveFindings(res.findings);
+                setIsLiveMode(true);
+            }
         } catch {
-            setFindings([]);
+            // Keep demo findings on failure
         } finally {
             setIsLoading(false);
         }
@@ -93,13 +107,35 @@ export default function DigitalFootprint({ caseId }: { caseId: string }) {
         setIsScanning(true);
         try {
             await enrichCaseOsint(caseId);
-            await load();
+            const res = await getCaseOsint(caseId);
+            if (res.findings && res.findings.length > 0) {
+                setLiveFindings(res.findings);
+                setIsLiveMode(true);
+            }
         } catch {
             /* surfaced by the empty state */
         } finally {
             setIsScanning(false);
         }
     };
+
+    const handleTriggerRealPipeline = () => {
+        if (onRunRealPipeline) {
+            onRunRealPipeline();
+        } else {
+            handleScan();
+        }
+    };
+
+    // Use live findings if live mode active and has findings; otherwise use mock benchmark findings
+    const findings: OsintFinding[] =
+        isLiveMode && liveFindings.length > 0
+            ? liveFindings
+            : isDemoMode
+              ? (mockOsintFindings as OsintFinding[])
+              : liveFindings;
+
+    const isCurrentDemo = !isLiveMode || liveFindings.length === 0;
 
     // Group findings by type
     const grouped = findings.reduce<Record<string, OsintFinding[]>>(
@@ -113,7 +149,7 @@ export default function DigitalFootprint({ caseId }: { caseId: string }) {
     const offlineCount = findings.filter((f) => !f.egress_used).length;
 
     // ── Loading ─────────────────────────────────────────────────────────
-    if (isLoading) {
+    if (isLoading && findings.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-12 font-mono text-xs text-surface-500">
                 <Icon name="radar" size={20} className="mb-2 animate-spin text-surface-400" />
@@ -122,7 +158,7 @@ export default function DigitalFootprint({ caseId }: { caseId: string }) {
         );
     }
 
-    // ── Empty state ─────────────────────────────────────────────────────
+    // ── Empty state (only in real mode when 0 findings) ─────────────────
     if (findings.length === 0) {
         return (
             <div className="flex flex-col gap-4">
@@ -155,6 +191,29 @@ export default function DigitalFootprint({ caseId }: { caseId: string }) {
     // ── Findings view ───────────────────────────────────────────────────
     return (
         <div className="flex flex-col gap-4 font-sans">
+            {/* Demo Run banner */}
+            {isCurrentDemo && (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2.5">
+                    <div className="flex items-center gap-2.5">
+                        <Chip tone="alert" size="xs" dot>
+                            BENCHMARK DEMO RUN
+                        </Chip>
+                        <span className="text-xs text-amber-200">
+                            Pre-loaded authentic forensic benchmark (FIR 108/2026).
+                        </span>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={handleTriggerRealPipeline}
+                        disabled={isScanning}
+                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 disabled:opacity-50"
+                    >
+                        <Icon name="refresh" size={12} className={isScanning ? "animate-spin" : ""} />
+                        <span>{isScanning ? "Running live pipeline…" : "Run Live Pipeline"}</span>
+                    </button>
+                </div>
+            )}
+
             {/* Toolbar */}
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
                 <div className="flex flex-wrap items-center gap-2">
@@ -164,20 +223,32 @@ export default function DigitalFootprint({ caseId }: { caseId: string }) {
                     <Chip tone="steel" size="xs">
                         {Object.keys(grouped).length} categories
                     </Chip>
+                    {isCurrentDemo ? (
+                        <Chip tone="alert" size="xs">
+                            Benchmark Dataset
+                        </Chip>
+                    ) : (
+                        <Chip tone="confirmed" size="xs" live>
+                            Live Ingestion
+                        </Chip>
+                    )}
                 </div>
-                <button
-                    type="button"
-                    onClick={handleScan}
-                    disabled={isScanning}
-                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-blue-500 disabled:opacity-50"
-                >
-                    <Icon
-                        name="refresh"
-                        size={13}
-                        className={isScanning ? "animate-spin" : ""}
-                    />
-                    <span>{isScanning ? "Running adapters…" : "Re-scan"}</span>
-                </button>
+
+                <div className="flex items-center gap-2">
+                    <button
+                        type="button"
+                        onClick={handleScan}
+                        disabled={isScanning}
+                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-all hover:bg-blue-500 disabled:opacity-50"
+                    >
+                        <Icon
+                            name="refresh"
+                            size={13}
+                            className={isScanning ? "animate-spin" : ""}
+                        />
+                        <span>{isScanning ? "Running adapters…" : "Run OSINT Scan"}</span>
+                    </button>
+                </div>
             </div>
 
             {/* Finding groups */}

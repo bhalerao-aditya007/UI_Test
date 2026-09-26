@@ -1066,3 +1066,128 @@ export const mockAuditLog = [
         status: "System Certified"
     }
 ];
+
+export const mockOsintFindings = [
+    {
+        finding_type: "geolocation",
+        label: "28.66531, 77.23240 (Mori Gate Terminal)",
+        attributes: {
+            latitude: 28.66531,
+            longitude: 77.23240,
+            altitude: 216.4,
+            captured_at: "2026-09-02T19:42:11",
+            location_name: "Mori Gate Terminal, Old Delhi",
+            relevance: "EXIF coordinates match seizure location of recovery cache"
+        },
+        confidence: 0.95,
+        source_url: null,
+        tool: "exiftool",
+        tool_args: ["-json", "-G", "-n"],
+        raw_sha256: "7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa3d677284addd200126d9069",
+        collected_at: "2026-09-03T04:12:00Z",
+        egress_used: false,
+        source_document: "Seizure_Photo_MoriGate_Cache.jpg"
+    },
+    {
+        finding_type: "device",
+        label: "OnePlus CPH2413 (SN: W4A8911C)",
+        attributes: {
+            make: "OnePlus",
+            model: "CPH2413 (Nord CE 3 Lite)",
+            serial_number: "W4A8911C",
+            software: "OxygenOS 14.0",
+            captured_at: "2026-09-02T19:42:11",
+            cross_case_match: "Serial matches phone seized in FIR 42/2025 (Rohini Extortion)"
+        },
+        confidence: 0.95,
+        source_url: null,
+        tool: "exiftool",
+        tool_args: ["-json", "-G", "-n"],
+        raw_sha256: "3d5a43905cf4e815e10e42d7b42f61e88863f64095bb4f9f4a9b6c0e816a75f2",
+        collected_at: "2026-09-03T04:12:00Z",
+        egress_used: false,
+        source_document: "Seizure_Photo_MoriGate_Cache.jpg"
+    },
+    {
+        finding_type: "phone_profile",
+        label: "+91 98112 44901 (Airtel Delhi)",
+        attributes: {
+            e164: "+919811244901",
+            country_code: 91,
+            national_number: "9811244901",
+            carrier: "Bharti Airtel Ltd",
+            circle: "Delhi & NCR",
+            line_type: "mobile",
+            valid: true,
+            cdr_corroboration: "Matches active caller ID on Kashmere Gate Wiretap Line 4"
+        },
+        confidence: 0.92,
+        source_url: null,
+        tool: "phonenumbers",
+        tool_args: ["IN"],
+        raw_sha256: "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9",
+        collected_at: "2026-09-03T04:12:01Z",
+        egress_used: false,
+        source_document: "Wiretap_Intercept_Line9811_Session4.txt"
+    },
+    {
+        finding_type: "phone_profile",
+        label: "+91 80004 11200 (Vi Gujarat - VoIP Flag)",
+        attributes: {
+            e164: "+918000411200",
+            country_code: 91,
+            national_number: "8000411200",
+            carrier: "Vodafone Idea Ltd",
+            circle: "Gujarat",
+            line_type: "voip",
+            valid: true,
+            anomaly: "Virtual SIP Trunk / VoIP routing detected on domestic number"
+        },
+        confidence: 0.88,
+        source_url: null,
+        tool: "phonenumbers",
+        tool_args: ["IN"],
+        raw_sha256: "185f8db32271fe25f561a6fc938b2e264306ec304eda518007d1764826381969",
+        collected_at: "2026-09-03T04:12:01Z",
+        egress_used: false,
+        source_document: "Extortion_Call_Audio_Transcript.txt"
+    },
+    {
+        finding_type: "typosquat",
+        label: "kashmere-syndicate-pay.in",
+        attributes: {
+            fuzzer: "omission/hyphenation",
+            parent_domain: "kashmeregate-logistics.in",
+            a_records: ["104.21.48.11", "172.67.182.204"],
+            mx_records: ["mail.kashmere-syndicate-pay.in"],
+            registered: true,
+            phishing_risk: "Active MX server indicates phishing/spoofing email readiness"
+        },
+        confidence: 0.85,
+        source_url: "http://kashmere-syndicate-pay.in",
+        tool: "dnstwist",
+        tool_args: ["--format", "json", "--registered", "--mx"],
+        raw_sha256: "bc60f64c6dd1f5c6b9f1d8ef3ee9f2e3be04ef3be04e12e3e5b128794d4d6e91",
+        collected_at: "2026-09-03T04:12:05Z",
+        egress_used: true,
+        source_document: "Phishing_Domain_Evidence_Link.txt"
+    },
+    {
+        finding_type: "social_account",
+        label: "telegram/imran_kg_handler",
+        attributes: {
+            platform: "Telegram",
+            username: "imran_kg_handler",
+            profile_url: "https://t.me/imran_kg_handler",
+            association: "Handles bulk hawala drop dispatch communications"
+        },
+        confidence: 0.72,
+        source_url: "https://t.me/imran_kg_handler",
+        tool: "sherlock",
+        tool_args: ["--print-found", "imran_kg_handler"],
+        raw_sha256: "2c624232cdd221771294dfbb310aca000a0df6ac9b66b0e318f0ff91e2e15b9f",
+        collected_at: "2026-09-03T04:12:30Z",
+        egress_used: true,
+        source_document: "Mobile_Chat_Export.txt"
+    }
+];

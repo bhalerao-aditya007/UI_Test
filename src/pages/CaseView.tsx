@@ -17,7 +17,7 @@
 // Fact Sheet and Theory Board — it now switches act first, then scrolls.
 
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 
 import { formatLocationString, synthesizeGraphFromFactSheet } from "../utils/factSheetSynthesizer";
@@ -45,13 +45,22 @@ import TheoryBoard from "../components/dashboard/analytics/TheoryBoard";
 import DigitalFootprint from "../components/dashboard/analytics/DigitalFootprint";
 
 // OSINT service
-import { getCaseOsint, osintFindingsToGraph, type OsintFinding } from "../services/osint";
+import {
+    getCaseOsint,
+    enrichCaseOsint,
+    osintFindingsToGraph,
+    type OsintFinding,
+} from "../services/osint";
 
 // Drawers & modals
 import CaseWorkspaceDrawer from "../components/dashboard/CaseWorkspaceDrawer";
 import DeltaIngestionModal from "../components/dashboard/DeltaIngestionModal";
 
-import { mockIdentityResolution, type FactSheetData } from "../data/mockCaseData";
+import {
+    mockIdentityResolution,
+    mockOsintFindings,
+    type FactSheetData,
+} from "../data/mockCaseData";
 import {
     triggerHistoricalAnalysis,
     getCaseGraph,
@@ -202,6 +211,8 @@ export default function CaseView() {
     const [liveReport, setLiveReport] = useState<AnalysisReport | null>(null);
     const [liveGraph, setLiveGraph] = useState<GraphData | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [searchParams] = useSearchParams();
+    const [isDemoMode, setIsDemoMode] = useState(() => searchParams.get("mode") !== "real");
     const [osintFindings, setOsintFindings] = useState<OsintFinding[]>([]);
 
     const mainScrollRef = useRef<HTMLDivElement>(null);
@@ -309,6 +320,23 @@ export default function CaseView() {
         }
     };
 
+    const handleRunRealPipeline = async () => {
+        if (!caseId) return;
+        setIsAnalyzing(true);
+        setIsDemoMode(false);
+        try {
+            await Promise.allSettled([
+                handleRunAIAnalysis(),
+                enrichCaseOsint(caseId)
+                    .then(() => getCaseOsint(caseId))
+                    .then((r) => setOsintFindings(r.findings || []))
+                    .catch(() => {}),
+            ]);
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
     const activeGraph = useMemo<GraphData>(() => {
         if (activeGraphTab === "financial") return caseBundle.financialGraph;
         if (activeGraphTab === "telecom") return caseBundle.telecomGraph;
@@ -319,11 +347,18 @@ export default function CaseView() {
                 ? liveGraph
                 : caseBundle.unifiedGraph;
 
-        // Merge OSINT nodes into unified view
-        if (osintFindings.length > 0) {
+        // Merge OSINT nodes into unified view (live findings if available; otherwise mock benchmark in demo mode)
+        const effectiveOsint =
+            osintFindings.length > 0
+                ? osintFindings
+                : isDemoMode
+                  ? (mockOsintFindings as OsintFinding[])
+                  : [];
+
+        if (effectiveOsint.length > 0) {
             const anchorName =
                 safeFactSheet.who?.[0]?.name || caseData.name;
-            const o = osintFindingsToGraph(osintFindings, anchorName);
+            const o = osintFindingsToGraph(effectiveOsint, anchorName);
             return {
                 nodes: [...(base.nodes || []), ...o.nodes],
                 edges: [...(base.edges || []), ...o.edges],
@@ -331,7 +366,7 @@ export default function CaseView() {
         }
 
         return base;
-    }, [activeGraphTab, liveGraph, caseBundle, osintFindings, safeFactSheet.who, caseData.name]);
+    }, [activeGraphTab, liveGraph, caseBundle, osintFindings, isDemoMode, safeFactSheet.who, caseData.name]);
 
     const dynamicIdentityData = useMemo(
         () => ({
@@ -404,7 +439,41 @@ export default function CaseView() {
                     </div>
 
                     <div className="flex items-center gap-2.5">
+                        {isDemoMode ? (
+                            <Chip tone="alert" size="sm" dot title="Pre-loaded authentic benchmark evidence">
+                                DEMO RUN
+                            </Chip>
+                        ) : (
+                            <Chip tone="confirmed" size="sm" live title="Live multi-model pipeline output">
+                                LIVE PIPELINE
+                            </Chip>
+                        )}
+
                         <TrackBadge track={caseData.track ?? 2} size="md" />
+
+                        <button
+                            type="button"
+                            onClick={() => scrollToSection("digital-footprint")}
+                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-blue-500/40 bg-blue-500/10 px-3 py-1.5 font-mono text-xs font-semibold text-blue-300 transition-colors hover:bg-blue-500/20"
+                            title="Jump to OSINT Digital Footprint"
+                        >
+                            <Icon name="radar" size={13} />
+                            <span>OSINT Footprint</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            onClick={handleRunRealPipeline}
+                            disabled={isAnalyzing}
+                            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-emerald-500 disabled:opacity-50"
+                        >
+                            <Icon
+                                name="refresh"
+                                size={14}
+                                className={isAnalyzing ? "animate-spin" : ""}
+                            />
+                            <span>{isAnalyzing ? "Running real pipeline…" : "Run Real Pipeline"}</span>
+                        </button>
 
                         <button
                             type="button"
@@ -417,8 +486,18 @@ export default function CaseView() {
                                 size={14}
                                 className={isAnalyzing ? "animate-spin" : ""}
                             />
-                            <span>{isAnalyzing ? "Synthesising…" : "Run AI analysis"}</span>
+                            <span>{isAnalyzing ? "Synthesising…" : "AI Synthesiser"}</span>
                         </button>
+
+                        {!isDemoMode && (
+                            <button
+                                type="button"
+                                onClick={() => setIsDemoMode(true)}
+                                className="cursor-pointer font-mono text-[11px] text-surface-500 underline transition-colors hover:text-surface-800"
+                            >
+                                Reset Demo
+                            </button>
+                        )}
 
                         <button
                             type="button"
@@ -922,7 +1001,11 @@ export default function CaseView() {
                                         title="Digital footprint — OSINT source adapters"
                                         subtitle="ExifTool, libphonenumber, dnstwist, Sherlock. Public-record tier only — every finding is hash-anchored and carries its collection timestamp."
                                     >
-                                        <DigitalFootprint caseId={caseData.id} />
+                                        <DigitalFootprint
+                                            caseId={caseData.id}
+                                            isDemoMode={isDemoMode}
+                                            onRunRealPipeline={handleRunRealPipeline}
+                                        />
                                     </Section>
                                 </>
                             )}

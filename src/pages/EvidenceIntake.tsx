@@ -3,7 +3,7 @@
 // chrome and motion only.
 
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import Navbar from "../components/layout/Navbar";
 import EvidenceChannelCard, {
@@ -153,9 +153,25 @@ export default function EvidenceIntake() {
     const navigate = useNavigate();
     const createCase = useCasesStore((state) => state.createCase);
 
-    const [isSampleMode, setIsSampleMode] = useState(true);
-    const [caseTitle, setCaseTitle] = useState("FIR 108/2026: Kashmere Gate Syndicate");
-    const [channelFiles, setChannelFiles] = useState<Record<string, ChannelFile[]>>(createSampleQueue);
+    const [searchParams] = useSearchParams();
+    const initialMode = searchParams.get("mode") || "demo";
+
+    const [isSampleMode, setIsSampleMode] = useState(initialMode === "demo");
+    const [caseTitle, setCaseTitle] = useState(
+        initialMode === "demo" ? "FIR 108/2026: Kashmere Gate Syndicate" : ""
+    );
+    const [channelFiles, setChannelFiles] = useState<Record<string, ChannelFile[]>>(
+        initialMode === "demo"
+            ? createSampleQueue
+            : () => ({
+                  fir_text: [],
+                  scanned_doc: [],
+                  cctv_video: [],
+                  audio_recordings: [],
+                  cdr_financial: [],
+                  image_bio: [],
+              })
+    );
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [streamedLogs, setStreamedLogs] = useState<string[]>([]);
@@ -343,7 +359,7 @@ export default function EvidenceIntake() {
         ]);
 
         await new Promise((r) => setTimeout(r, 1200));
-        navigate(`/cases/${targetCaseId}/summary`);
+        navigate(`/cases/${targetCaseId}/summary?mode=${isSampleMode ? "demo" : "real"}`);
     };
 
     return (
@@ -398,7 +414,7 @@ export default function EvidenceIntake() {
                         <div>
                             <h3 className="flex flex-wrap items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-surface-900">
                                 <span>
-                                    {isSampleMode ? "Queued benchmark evidence loaded" : "Custom evidence ingestion active"}
+                                    {isSampleMode ? "Queued benchmark evidence loaded" : "Live Pipeline Mode — Your Evidence, Real AI"}
                                 </span>
                                 <Chip tone={isSampleMode ? "alert" : "confirmed"} size="xs">
                                     {isSampleMode ? "Sample queue" : "Live user files"}
@@ -406,8 +422,8 @@ export default function EvidenceIntake() {
                             </h3>
                             <p className="mt-0.5 text-xs text-surface-500">
                                 {isSampleMode
-                                    ? "Authentic FIR 108/2026 text & Axis Bank structuring transactions are pre-staged in the queue. Click 'Run Analysis Pipeline' to test real model inference, or clear queue to drop your own files."
-                                    : "You are uploading custom evidentiary documents. AstraX will process them through real OCR, NER, and GNN extraction pipelines."}
+                                    ? "Authentic FIR 108/2026 text & Axis Bank structuring transactions are pre-staged. Click 'Run Analysis Pipeline' to see the full demo, or clear the queue and upload your own files."
+                                    : "You are uploading your own evidence files. AstraX will process them through live AI models — OCR, ASR, NER, and GNN pipelines. All outputs are 100% model-generated, zero hardcoded data."}
                             </p>
                         </div>
                     </div>

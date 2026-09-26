@@ -29,6 +29,7 @@ interface FactSheetProps {
     isEmbedded?: boolean;
     showDiffIndicator?: boolean;
     onJumpToSection?: (sectionId: string) => void;
+    visibleSections?: SectionId[];
 }
 
 type SectionId = "who" | "what" | "when" | "where" | "evidence" | "relationships" | "gaps";
@@ -61,6 +62,7 @@ export default function FactSheet({
     isEmbedded = false,
     showDiffIndicator = false,
     onJumpToSection,
+    visibleSections,
 }: FactSheetProps) {
     const emptyFactSheet: FactSheetData = {
         caseId: caseId || "case-1",
@@ -117,6 +119,10 @@ export default function FactSheet({
     const [active, setActive] = useState<SectionId>("who");
     const isTrack1 = activeData.track === 1;
     const activeMeta = SECTIONS.find((s) => s.id === active)!;
+
+    const displaySections = visibleSections
+        ? SECTIONS.filter((s) => visibleSections.includes(s.id))
+        : SECTIONS;
 
     return (
         <div className="flex flex-col gap-5">
@@ -204,7 +210,7 @@ export default function FactSheet({
                             <Kicker tone="neutral">Index</Kicker>
                         </div>
                         <nav className="space-y-0.5">
-                            {SECTIONS.map((s) => {
+                            {displaySections.map((s) => {
                                 const isActive = s.id === active;
                                 const isEmpty = counts[s.id] === 0;
                                 return (
