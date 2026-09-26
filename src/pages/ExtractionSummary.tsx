@@ -147,7 +147,7 @@ export default function ExtractionSummary() {
 
                             if (Array.isArray(ext.accused)) {
                                 ext.accused.forEach((acc: any, aIdx: number) => {
-                                    if (acc.name && !whoList.some((w) => w.name.toLowerCase() === acc.name.toLowerCase())) {
+                                    if (acc.name && !whoList.some((w) => (w.name || "").toLowerCase() === acc.name.toLowerCase())) {
                                         whoList.push({
                                             id: `acc-${idx}-${aIdx}`,
                                             name: acc.name,
@@ -163,7 +163,7 @@ export default function ExtractionSummary() {
                                 });
                             }
 
-                            if (ext.complainant?.name && !whoList.some((w) => w.name.toLowerCase() === ext.complainant.name.toLowerCase())) {
+                            if (ext.complainant?.name && !whoList.some((w) => (w.name || "").toLowerCase() === ext.complainant.name.toLowerCase())) {
                                 whoList.push({
                                     id: `comp-${idx}`,
                                     name: ext.complainant.name,
@@ -179,7 +179,7 @@ export default function ExtractionSummary() {
                             if (Array.isArray(ext.acts_and_sections)) {
                                 ext.acts_and_sections.forEach((sec: any) => {
                                     const bns = `${sec.act || "BNS"} ${sec.section || ""}`.trim();
-                                    if (!whatList.some((w) => w.bnsSection === bns)) {
+                                    if (!whatList.some((w) => (w.bnsSection || "") === bns)) {
                                         whatList.push({
                                             bnsSection: bns,
                                             statuteName: sec.title || "Statutory Charge",
@@ -202,7 +202,7 @@ export default function ExtractionSummary() {
 
                             if (ext.police_station || ext.district || ext.location) {
                                 const loc = ext.police_station || ext.location || ext.district;
-                                if (!whereList.some((w) => w.locationName.toLowerCase() === loc.toLowerCase())) {
+                                if (!whereList.some((w) => (w.locationName || "").toLowerCase() === loc.toLowerCase())) {
                                     whereList.push({
                                         locationName: loc,
                                         jurisdiction: ext.district || "State Police Jurisdiction",
