@@ -87,7 +87,7 @@ export default function Navbar() {
                 </nav>
             </div>
 
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-3">
                 <span className="hidden md:inline-flex">
                     <Chip tone="confirmed" size="sm" live>
                         Air-gapped
@@ -95,21 +95,11 @@ export default function Navbar() {
                 </span>
 
                 <Link
-                    to="/intake?mode=demo"
-                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-semibold text-amber-200 transition-colors hover:bg-amber-500/20"
-                    title="Launch preloaded FIR 108/2026 benchmark demo"
-                >
-                    <Icon name="radar" size={13} />
-                    <span>Demo Run</span>
-                </Link>
-
-                <Link
                     to="/intake?mode=real"
-                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-ember-500 px-3.5 py-1.5 text-xs font-bold text-surface-900 shadow-[inset_0_1px_0_0_rgba(246,242,237,0.18)] transition-colors hover:bg-ember-400"
-                    title="Upload your own documents for live AI extraction"
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg bg-ember-500 px-3.5 py-1.5 text-xs font-semibold text-surface-900 shadow-[inset_0_1px_0_0_rgba(246,242,237,0.18)] transition-colors hover:bg-ember-400"
                 >
-                    <Icon name="upload" size={13} />
-                    <span>Run Pipeline</span>
+                    <Icon name="plus" size={13} />
+                    <span>New Intake</span>
                 </Link>
             </div>
         </header>

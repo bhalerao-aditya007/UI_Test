@@ -72,11 +72,9 @@ const FALLBACK_META = {
 export default function DigitalFootprint({
     caseId,
     isDemoMode = true,
-    onRunRealPipeline,
 }: {
     caseId: string;
     isDemoMode?: boolean;
-    onRunRealPipeline?: () => void;
 }) {
     const [liveFindings, setLiveFindings] = useState<OsintFinding[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -116,14 +114,6 @@ export default function DigitalFootprint({
             /* surfaced by the empty state */
         } finally {
             setIsScanning(false);
-        }
-    };
-
-    const handleTriggerRealPipeline = () => {
-        if (onRunRealPipeline) {
-            onRunRealPipeline();
-        } else {
-            handleScan();
         }
     };
 
@@ -191,28 +181,6 @@ export default function DigitalFootprint({
     // ── Findings view ───────────────────────────────────────────────────
     return (
         <div className="flex flex-col gap-4 font-sans">
-            {/* Demo Run banner */}
-            {isCurrentDemo && (
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-4 py-2.5">
-                    <div className="flex items-center gap-2.5">
-                        <Chip tone="alert" size="xs" dot>
-                            BENCHMARK DEMO RUN
-                        </Chip>
-                        <span className="text-xs text-amber-200">
-                            Pre-loaded authentic forensic benchmark (FIR 108/2026).
-                        </span>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={handleTriggerRealPipeline}
-                        disabled={isScanning}
-                        className="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 disabled:opacity-50"
-                    >
-                        <Icon name="refresh" size={12} className={isScanning ? "animate-spin" : ""} />
-                        <span>{isScanning ? "Running live pipeline…" : "Run Live Pipeline"}</span>
-                    </button>
-                </div>
-            )}
 
             {/* Toolbar */}
             <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">

@@ -412,18 +412,18 @@ export default function EvidenceIntake() {
                             <Icon name={isSampleMode ? "radar" : "file-text"} size={18} />
                         </div>
                         <div>
-                            <h3 className="flex flex-wrap items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-surface-900">
-                                <span>
-                                    {isSampleMode ? "Queued benchmark evidence loaded" : "Live Pipeline Mode — Your Evidence, Real AI"}
+                            <div className="flex items-center gap-2">
+                                <span className="font-display text-sm font-semibold text-surface-900">
+                                    {isSampleMode ? "Benchmark Case Mode" : "Live Ingestion Mode"}
                                 </span>
                                 <Chip tone={isSampleMode ? "alert" : "confirmed"} size="xs">
-                                    {isSampleMode ? "Sample queue" : "Live user files"}
+                                    {isSampleMode ? "Demo Run" : "Real Pipeline"}
                                 </Chip>
-                            </h3>
+                            </div>
                             <p className="mt-0.5 text-xs text-surface-500">
                                 {isSampleMode
-                                    ? "Authentic FIR 108/2026 text & Axis Bank structuring transactions are pre-staged. Click 'Run Analysis Pipeline' to see the full demo, or clear the queue and upload your own files."
-                                    : "You are uploading your own evidence files. AstraX will process them through live AI models — OCR, ASR, NER, and GNN pipelines. All outputs are 100% model-generated, zero hardcoded data."}
+                                    ? "FIR 108/2026 evidence is pre-staged. Click 'Run Analysis Pipeline' or clear to upload your own files."
+                                    : "Upload your evidence files below for direct multi-modal neural extraction. Zero synthetic data."}
                             </p>
                         </div>
                     </div>
